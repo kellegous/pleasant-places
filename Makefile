@@ -55,9 +55,12 @@ work/zips.json: bin/build-zips
 
 work/norm.json: bin/build-grid $(DATA)
 	@echo 'BUILDING GRID DATA'
-	@./bin/build-grid
+	@./bin/build-grid --render=work/grid.png
 
-serve: bin/serve work/norm.json
+check: bin/check-deps
+	@./bin/check-deps
+
+serve: check bin/serve work/norm.json
 	@./bin/serve
 
 clean:
