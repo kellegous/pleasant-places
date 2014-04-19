@@ -37,6 +37,9 @@ bin/% : src/cmds/%.go
 bin/build-grid: src/github.com/ungerik/go-cairo work/zips.json
 	@GOPATH=`pwd` go build -o $@ src/cmds/build-grid.go
 
+bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
+	@GOPATH=`pwd` go build -o $@ src/cmds/server.go
+
 data/gsod_%.tar : bin/download
 	@./bin/download 1990-2013
 
@@ -45,6 +48,9 @@ work/zips.json: bin/build-zips
 
 work/norm.json: bin/build-grid
 	@./bin/build-grid
+
+serve: bin/serve work/norm.json
+	@./bin/serve
 
 clean:
 	rm -rf work bin
