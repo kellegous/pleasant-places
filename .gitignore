@@ -3,3 +3,5 @@ data/ish-history.csv
 data/ish-inventory.csv.z
 bin
 pkg
+work
+src/github.com
