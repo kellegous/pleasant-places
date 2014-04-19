@@ -23,11 +23,13 @@ DATA=data/gsod_1990.tar \
 	data/gsod_2012.tar \
 	data/gsod_2013.tar
 
-ALL : $(DATA)
+ALL : $(DATA) work/zips.json
 
-bin/download: src/cmds/download.go
-	@GOPATH=`pwd` go build -o $@ src/cmds/download.go
+bin/% : src/cmds/%.go
+	@GOPATH=`pwd` go build -o $@ $<
 
 data/gsod_%.tar : bin/download
 	@./bin/download 1990-2013
-	
+
+work/zips.json : bin/build-zips
+	@./bin/build-zips
