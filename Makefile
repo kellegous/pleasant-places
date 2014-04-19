@@ -1,4 +1,5 @@
-DATA=data/gsod_1990.tar \
+DATA=data/ish-history.csv \
+	data/gsod_1990.tar \
 	data/gsod_1991.tar \
 	data/gsod_1992.tar \
 	data/gsod_1993.tar \
