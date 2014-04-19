@@ -44,7 +44,7 @@ bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
 data/ish-history.csv: bin/download
 	@echo 'DOWNLOADING GSOD DATA'
 	@./bin/download 1990-2013
-	
+
 data/gsod_%.tar : bin/download
 	@echo 'DOWNLOADING GSOD DATA'
 	@./bin/download 1990-2013
@@ -53,7 +53,8 @@ work/zips.json: bin/build-zips
 	@echo 'BUILDING ZIP DATA'
 	@./bin/build-zips
 
-work/norm.json: bin/build-grid
+work/norm.json: bin/build-grid $(DATA)
+	@echo 'BUILDING GRID DATA'
 	@./bin/build-grid
 
 serve: bin/serve work/norm.json
