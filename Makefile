@@ -38,12 +38,14 @@ bin/build-grid: src/github.com/ungerik/go-cairo work/zips.json
 	@GOPATH=`pwd` go build -o $@ src/cmds/build-grid.go
 
 bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
-	@GOPATH=`pwd` go build -o $@ src/cmds/server.go
+	@GOPATH=`pwd` go build -o $@ src/cmds/serve.go
 
 data/gsod_%.tar : bin/download
+	@echo 'DOWNLOADING GSOD DATA'
 	@./bin/download 1990-2013
 
 work/zips.json: bin/build-zips
+	@echo 'BUILDING ZIP DATA'
 	@./bin/build-zips
 
 work/norm.json: bin/build-grid
