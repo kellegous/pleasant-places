@@ -41,6 +41,10 @@ bin/build-grid: src/github.com/ungerik/go-cairo work/zips.json
 bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
 	@GOPATH=`pwd` go build -o $@ src/cmds/serve.go
 
+data/ish-history.csv: bin/download
+	@echo 'DOWNLOADING GSOD DATA'
+	@./bin/download 1990-2013
+	
 data/gsod_%.tar : bin/download
 	@echo 'DOWNLOADING GSOD DATA'
 	@./bin/download 1990-2013
