@@ -6,7 +6,6 @@ import (
   "encoding/json"
   "flag"
   "fmt"
-  "github.com/ungerik/go-cairo"
   "image"
   "math"
   "os"
@@ -352,37 +351,6 @@ func WriteJson(filename string, data interface{}) error {
   defer w.Close()
 
   return json.NewEncoder(w).Encode(data)
-}
-
-func Render(filename string, r image.Rectangle, grid *Grid) {
-  s := cairo.NewSurface(cairo.FORMAT_ARGB32, r.Dx(), r.Dy())
-  s.SetAntialias(cairo.ANTIALIAS_SUBPIXEL)
-
-  s.SetSourceRGB(0.15, 0.15, 0.15)
-  s.Rectangle(0, 0, float64(r.Dx()), float64(r.Dy()))
-  s.Fill()
-
-  for i := 0; i < grid.W; i++ {
-    for j := 0; j < grid.H; j++ {
-      r := grid.Grid[i][j]
-      if r == nil {
-        continue
-      }
-      s.SetSourceRGBA(1.0, 1.0, 1.0, 0.1)
-      s.Rectangle(
-        float64(r.Rect.Min.X)+0.5, float64(r.Rect.Min.Y)+0.5,
-        float64(r.Rect.Dx()-1), float64(r.Rect.Dy()-1))
-      s.Fill()
-
-      for _, loc := range r.Stations {
-        s.SetSourceRGB(1.0, 1.0, 0.0)
-        s.Arc(loc.X, loc.Y, 1, 0, 2*math.Pi)
-        s.Fill()
-      }
-    }
-  }
-
-  s.WriteToPNG(filename)
 }
 
 func IsPleasant(s *gsod.Summary, p *TempPref) bool {
@@ -772,7 +740,6 @@ func WriteGridInfoFile(filename string, grid *Grid) error {
 func main() {
   flagWork := flag.String("work", "work", "the destination work directory")
   flagData := flag.String("data", "data", "the source data directory")
-  flagRender := flag.String("render", "", "pass a filename to get a debug image rendered")
   flag.Parse()
 
   var zips []*Zip
@@ -814,9 +781,5 @@ func main() {
 
   if err := WriteZipIndex(zipDir, grid, 10); err != nil {
     panic(err)
-  }
-
-  if *flagRender != "" {
-    Render(*flagRender, r, grid)
   }
 }

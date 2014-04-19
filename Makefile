@@ -29,13 +29,10 @@ ALL : work/norm.json
 src/github.com/kellegous/pork:
 	@GOPATH=`pwd` go get github.com/kellegous/pork
 
-src/github.com/ungerik/go-cairo:
-	@GOPATH=`pwd` go get github.com/ungerik/go-cairo
-
 bin/% : src/cmds/%.go
 	@GOPATH=`pwd` go build -o $@ $<
 
-bin/build-grid: src/github.com/ungerik/go-cairo work/zips.json
+bin/build-grid: work/zips.json
 	@GOPATH=`pwd` go build -o $@ src/cmds/build-grid.go
 
 bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
@@ -55,7 +52,7 @@ work/zips.json: bin/build-zips
 
 work/norm.json: bin/build-grid $(DATA)
 	@echo 'BUILDING GRID DATA'
-	@./bin/build-grid --render=work/grid.png
+	@./bin/build-grid
 
 check: bin/check-deps
 	@./bin/check-deps
