@@ -23,13 +23,31 @@ DATA=data/gsod_1990.tar \
 	data/gsod_2012.tar \
 	data/gsod_2013.tar
 
-ALL : $(DATA) work/zips.json
+ALL : work/norm.json
+
+src/github.com/kellegous/pork:
+	@GOPATH=`pwd` go get github.com/kellegous/pork
+
+src/github.com/ungerik/go-cairo:
+	@GOPATH=`pwd` go get github.com/ungerik/go-cairo
 
 bin/% : src/cmds/%.go
 	@GOPATH=`pwd` go build -o $@ $<
 
+bin/build-grid: src/github.com/ungerik/go-cairo work/zips.json
+	@GOPATH=`pwd` go build -o $@ src/cmds/build-grid.go
+
 data/gsod_%.tar : bin/download
 	@./bin/download 1990-2013
 
-work/zips.json : bin/build-zips
+work/zips.json: bin/build-zips
 	@./bin/build-zips
+
+work/norm.json: bin/build-grid
+	@./bin/build-grid
+
+clean:
+	rm -rf work bin
+
+nuke: clean
+	rm -rf $(DATA) src/github.com
