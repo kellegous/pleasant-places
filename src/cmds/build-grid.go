@@ -13,6 +13,7 @@ import (
   "util"
 )
 
+// A temperature preference range.
 type TempPref struct {
   AvgMin float64
   AvgMax float64
@@ -21,16 +22,27 @@ type TempPref struct {
   Name   string
 }
 
-var LikeItNorm = &TempPref{55, 75, 45, 85, "norm"}
-var LikeItWarm = &TempPref{65, 85, 55, 95, "warm"}
-var LikeItCool = &TempPref{45, 65, 35, 65, "cool"}
+var (
+  // the normal temperature range
+  LikeItNorm = &TempPref{55, 75, 45, 85, "norm"}
 
+  // for those that like it a little warmer
+  LikeItWarm = &TempPref{65, 85, 55, 95, "warm"}
+
+  // for those that like it a little cooler
+  LikeItCool = &TempPref{45, 65, 35, 65, "cool"}
+)
+
+// All known temperature preferences
 var TempPrefs = []*TempPref{
   // LikeItCool,
   LikeItNorm,
   // LikeItWarm,
 }
 
+// Declares a grid of certain width & height with a list of
+// active cells. This is used to selectively turn off parts
+// of the grid.
 type GridConfig struct {
   W      int
   H      int
@@ -38,12 +50,16 @@ type GridConfig struct {
   Active [][]int
 }
 
+// The location of a station in virtual coordinates
 type StationLoc struct {
   *coriolis.Station
   X float64
   Y float64
 }
 
+// Defines a region of the grid and keeps a lot of
+// data about what is contained within and around
+// that grid.
 type Region struct {
   I        int
   J        int
@@ -54,17 +70,21 @@ type Region struct {
   City     string
 }
 
+// Essentially a matrix of regions. Inactive regions
+// are nil.
 type Grid struct {
   W    int
   H    int
   Grid [][]*Region
 }
 
+// Simple euclidean distance.
 func Distance(x0, y0, x1, y1 float64) float64 {
   dx, dy := x1-x0, y1-y0
   return math.Sqrt(dx*dx + dy*dy)
 }
 
+// Sort a list of station locations by their distance to a particular point.
 func SortStationLocs(locs []*StationLoc, x, y float64) {
   dist := make([]float64, len(locs))
   for i, loc := range locs {
@@ -81,6 +101,7 @@ func SortStationLocs(locs []*StationLoc, x, y float64) {
     })
 }
 
+// Find the stations nearest the region (i,j) searching in radius r.
 func (g *Grid) StationsAround(locs *[]*StationLoc, i, j, r int) {
   if i < 0 || j < 0 {
     return
@@ -114,12 +135,16 @@ func (g *Grid) StationsAround(locs *[]*StationLoc, i, j, r int) {
   }
 }
 
+// Locate the major (most populous) city with region (i,j). This returns
+// the name of the city and the population. If (i,j) is an inactive region,
+// this will simply return "" and 0.
 func MajorCityOf(g *Grid, i, j int) (string, int) {
   r := g.Grid[i][j]
   if r == nil {
     return "", 0
   }
 
+  // some regions have zips with the same city name, combine them.
   m := map[string]int{}
   for _, zip := range r.Zips {
     m[zip.City] += zip.Pop
@@ -138,6 +163,9 @@ func MajorCityOf(g *Grid, i, j int) (string, int) {
   return name, pop
 }
 
+// Produce a text label for the region (i,j). First try to find a major
+// city in the region. If there is not one, we're going to try to produce
+// a relative name (i.e. EAST OF RENO).
 func LabelFor(g *Grid, i, j int) string {
   name, _ := MajorCityOf(g, i, j)
   if name != "" {
@@ -224,6 +252,8 @@ func LabelFor(g *Grid, i, j int) string {
   return names[0]
 }
 
+// Find the nearest N stations to the region r. This will search in an increasing
+// radius in and around a region until N stations are found.
 func NearestN(c *GridConfig, grid *Grid, r *Region, n int) []*StationLoc {
   cx := float64(r.Rect.Min.X) + float64(r.Rect.Dx())/2.0
   cy := float64(r.Rect.Min.Y) + float64(r.Rect.Dy())/2.0
@@ -240,6 +270,7 @@ func NearestN(c *GridConfig, grid *Grid, r *Region, n int) []*StationLoc {
   return locs[0:n]
 }
 
+// Load the grid config from a file.
 func LoadGridConfig(filename string, c *GridConfig) error {
   r, err := os.Open(filename)
   if err != nil {
@@ -254,6 +285,8 @@ func LoadGridConfig(filename string, c *GridConfig) error {
   return nil
 }
 
+// Compute a transformation function that will take a point in lat, lon and produce a virtual x, y that fits relatively
+// in the Rectangle r. TODO(knorton): This is a stupid and lazy projection, but it works.
 func ComputeTransform(stations []*coriolis.Station, r image.Rectangle) func(float64, float64) (float64, float64) {
   minY, maxY, minX, maxX := stations[0].Lat, stations[0].Lat, stations[0].Lon, stations[0].Lon
   for _, s := range stations {
@@ -274,6 +307,7 @@ func ComputeTransform(stations []*coriolis.Station, r image.Rectangle) func(floa
   }
 }
 
+// Use the transformation to place each of the stations into a location.
 func PlaceStations(stations []*coriolis.Station, tx func(float64, float64) (float64, float64)) []*StationLoc {
   var locs []*StationLoc
   for _, s := range stations {
@@ -287,6 +321,7 @@ func PlaceStations(stations []*coriolis.Station, tx func(float64, float64) (floa
   return locs
 }
 
+// Take the list of station locations and fold them into the regions of a grid.
 func BuildGrid(locs []*StationLoc, zips []*Zip, r image.Rectangle, c *GridConfig) *Grid {
   nx, ny := c.W, c.H
   regs := make([][]*Region, nx)
@@ -343,6 +378,8 @@ func BuildGrid(locs []*StationLoc, zips []*Zip, r image.Rectangle, c *GridConfig
   return grid
 }
 
+// Utility method for serializing an object to JSON and writing
+// it to a file.
 func WriteJson(filename string, data interface{}) error {
   w, err := os.Create(filename)
   if err != nil {
@@ -353,6 +390,8 @@ func WriteJson(filename string, data interface{}) error {
   return json.NewEncoder(w).Encode(data)
 }
 
+// Determine if the summary data indicates a "pleasant" day according to the
+// given temperature prefs.
 func IsPleasant(s *gsod.Summary, p *TempPref) bool {
   if s.TempAvg < 999 && (s.TempAvg < p.AvgMin || s.TempAvg > p.AvgMax) {
     return false
@@ -377,10 +416,13 @@ func IsPleasant(s *gsod.Summary, p *TempPref) bool {
   return true
 }
 
+// A rational type holding a perctage value, that can also
+// represent NaN as zero.
 type Pct struct {
   A, B int
 }
 
+// Turn the number into a byte (0-255), 0 is the null value.
 func (p *Pct) Byte() byte {
   if p.B == 0 {
     return 0
@@ -392,12 +434,14 @@ func (p *Pct) Byte() byte {
   return 1 + byte(f)
 }
 
+// The summarized stats for a region.
 type RegionStats struct {
   *Region
   Months [12]byte
   Total  byte
 }
 
+// A customized JSON marshaler.
 func (r *RegionStats) MarshalJSON() ([]byte, error) {
   var d struct {
     I        int
@@ -421,6 +465,7 @@ func (r *RegionStats) MarshalJSON() ([]byte, error) {
   return json.Marshal(&d)
 }
 
+// Convert a region and a years worth of data to a RegionStats object.
 func toRegionStats(region *Region, data [12]Pct) *RegionStats {
   var r [12]byte
   var p Pct
@@ -437,20 +482,26 @@ func toRegionStats(region *Region, data [12]Pct) *RegionStats {
   }
 }
 
+// Provides constant time lookup of RegionStats by (i,j)
 type RegionStatsMap map[int]*RegionStats
 
+// Create a new, empty RegionStatsMap
 func NewRegionStatsMap() RegionStatsMap {
   return RegionStatsMap(map[int]*RegionStats{})
 }
 
+// Put the RegionStats object into the map.
 func (r RegionStatsMap) Put(s *RegionStats) {
   r[s.I<<16|s.J] = s
 }
 
+// Find the RegionStats for the region (i,j)
 func (r RegionStatsMap) Get(i, j int) *RegionStats {
   return r[i<<16|j]
 }
 
+// Most of the work will be done here as this computes that data for and writes the
+// stats files for each region.
 func WriteStatsFiles(dir string, store *gsod.Store, grid *Grid, tp *TempPref) error {
   m := map[string][][12]Pct{}
   for _, station := range store.Stations {
@@ -544,6 +595,7 @@ type Zip struct {
   Y    float64
 }
 
+// Load the zipcode data into the referenced array.
 func LoadZips(filename string, zips *[]*Zip) error {
   r, err := os.Open(filename)
   if err != nil {
@@ -567,6 +619,7 @@ func LoadZips(filename string, zips *[]*Zip) error {
   return nil
 }
 
+// Place the zips into the virtual coordinates using the transformation.
 func PlaceZips(zips []*Zip, tx func(float64, float64) (float64, float64)) {
   for _, z := range zips {
     x, y := tx(z.Lat, z.Lon)
@@ -581,6 +634,7 @@ type zipIndexEntry struct {
   J int
 }
 
+// Custom marshaler to just pack everything into a JSON array.
 func (z *zipIndexEntry) MarshalJSON() ([]byte, error) {
   a := [4]interface{}{
     z.Zip.Code,
@@ -591,6 +645,8 @@ func (z *zipIndexEntry) MarshalJSON() ([]byte, error) {
   return json.Marshal(a)
 }
 
+// Build an map of zipcode prefix strings to zipPrefix objects which contains
+// the list of relevant zips associated with that prefix.
 func indexByPrefix(zips []*zipIndexEntry, l int) map[string]*zipPrefix {
   idx := map[string]*zipPrefix{}
   for _, zip := range zips {
@@ -605,6 +661,7 @@ func indexByPrefix(zips []*zipIndexEntry, l int) map[string]*zipPrefix {
   return idx
 }
 
+// Truncate the list of zip index entries to n items.
 func limitBy(zips []*zipIndexEntry, n int) []*zipIndexEntry {
   if len(zips) < n {
     return zips
@@ -612,11 +669,19 @@ func limitBy(zips []*zipIndexEntry, n int) []*zipIndexEntry {
   return zips[:n]
 }
 
+// All the data for a particular zip prefix.
 type zipPrefix struct {
+  // the data needed to offer N completions for this prefix
   Z []*zipIndexEntry
+  // the coordinates of the regions to highlight on the map,
+  // J is the lower 8 bits, I is the next 8 bits. This just
+  // slims down the JSON structure a bit.
   C []int32
 }
 
+// Takes a zipPrefix that is populated with zips, computes
+// the set of coordinates as C and then truncates the list
+// of zips to N. If n is -1, do not truncate.
 func (z *zipPrefix) build(n int) {
   m := map[int32]bool{}
   for _, zip := range z.Z {
@@ -632,6 +697,8 @@ func (z *zipPrefix) build(n int) {
   }
 }
 
+// Write the zip index files for the given prefix and then descend to longer
+// prefixes writing those associated files.
 func writeZipFiles(dir, prefix string, n int, zips []*zipIndexEntry) error {
   l := len(prefix) + 1
   m := indexByPrefix(zips, l)
@@ -669,6 +736,9 @@ func writeZipFiles(dir, prefix string, n int, zips []*zipIndexEntry) error {
   return WriteJson(filepath.Join(dir, name), m)
 }
 
+// Generates all the files that make up the zip-code index. This is
+// a heirarchical directory/file structure that allows auto-suggest
+// to work with just static files.
 func WriteZipIndex(dir string, grid *Grid, n int) error {
   var zips []*zipIndexEntry
   // build a list of zips
@@ -699,6 +769,7 @@ func WriteZipIndex(dir string, grid *Grid, n int) error {
   return writeZipFiles(dir, "", n, zips)
 }
 
+// Just ensure that the directory exists.
 func EnsureDir(path string) error {
   if _, err := os.Stat(path); err != nil {
     return os.MkdirAll(path, os.ModePerm)
@@ -706,6 +777,8 @@ func EnsureDir(path string) error {
   return nil
 }
 
+// Write a json file with information about the grid. This is used for
+// debugging assignment of stations and zips to regions.
 func WriteGridInfoFile(filename string, grid *Grid) error {
   w, err := os.Create(filename)
   if err != nil {
