@@ -94,8 +94,8 @@ func main() {
   os.MkdirAll(*flagDest, os.ModePerm)
 
   if err := EnsureDownloadAll(*flagDest,
-    "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/ish-history.csv",
-    "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/ish-inventory.csv.z"); err != nil {
+    "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.csv",
+    "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-inventory.csv.z"); err != nil {
     panic(err)
   }
 
