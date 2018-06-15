@@ -1,6 +1,8 @@
 data/gsod_????.tar
 data/ish-history.csv
 data/ish-inventory.csv.z
+data/isd-history.csv
+data/isd-inventory.csv.z
 bin
 pkg
 work

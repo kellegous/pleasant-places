@@ -10,7 +10,7 @@ import (
   "strings"
 )
 
-const HistoryFile = "ish-history.csv"
+const HistoryFile = "isd-history.csv"
 
 type Station struct {
   Usaf     string
@@ -59,7 +59,7 @@ func parseLatLon(s string, v *float64) error {
     return nil
   }
 
-  n, err := strconv.ParseInt(s[1:], 10, 64)
+  n, err := strconv.ParseFloat(s[1:], 64)
   if err != nil {
     return err
   }
@@ -68,7 +68,7 @@ func parseLatLon(s string, v *float64) error {
     n = -n
   }
 
-  *v = float64(n) / 1000
+  *v = float64(n)
   return nil
 }
 
@@ -99,14 +99,14 @@ func ForEachStation(dir string, fn func(s *Station) error) error {
     s.Wban = v[1]
     s.Name = v[2]
     s.Country = v[3]
-    s.State = v[5]
-    s.Call = v[6]
+    s.State = v[4]
+    s.Call = v[5]
 
-    if err := parseLatLon(v[7], &s.Lat); err != nil {
+    if err := parseLatLon(v[6], &s.Lat); err != nil {
       return err
     }
 
-    if err := parseLatLon(v[8], &s.Lon); err != nil {
+    if err := parseLatLon(v[7], &s.Lon); err != nil {
       return err
     }
 

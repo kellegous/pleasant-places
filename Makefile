@@ -1,4 +1,4 @@
-DATA=data/ish-history.csv \
+DATA=data/isd-history.csv \
 	data/gsod_1990.tar \
 	data/gsod_1991.tar \
 	data/gsod_1992.tar \
@@ -38,7 +38,7 @@ bin/build-grid: work/zips.json
 bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
 	@GOPATH=`pwd` go build -o $@ src/cmds/serve.go
 
-data/ish-history.csv: bin/download
+data/isd-history.csv: bin/download
 	@echo 'DOWNLOADING GSOD DATA'
 	@./bin/download 1990-2013
 
