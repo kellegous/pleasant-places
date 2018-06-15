@@ -129,7 +129,7 @@ func stationInUsBounds(s *Station) bool {
     return false
   }
 
-  if s.Lon > -60 || s.Lon < -130 {
+  if s.Lon > -60 || s.Lon < -125 {
     return false
   }
 
