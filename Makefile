@@ -22,7 +22,11 @@ DATA=data/isd-history.csv \
 	data/gsod_2010.tar \
 	data/gsod_2011.tar \
 	data/gsod_2012.tar \
-	data/gsod_2013.tar
+	data/gsod_2013.tar \
+	data/gsod_2014.tar \
+	data/gsod_2015.tar \
+	data/gsod_2016.tar \
+	data/gsod_2017.tar
 
 ALL : work/norm.json
 
@@ -40,11 +44,11 @@ bin/serve: src/cmds/serve.go src/github.com/kellegous/pork
 
 data/isd-history.csv: bin/download
 	@echo 'DOWNLOADING GSOD DATA'
-	@./bin/download 1990-2013
+	@./bin/download 1990-2017
 
 data/gsod_%.tar : bin/download
 	@echo 'DOWNLOADING GSOD DATA'
-	@./bin/download 1990-2013
+	@./bin/download 1990-2017
 
 work/zips.json: bin/build-zips
 	@echo 'BUILDING ZIP DATA'
